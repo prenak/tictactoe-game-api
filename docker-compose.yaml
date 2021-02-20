@@ -1,0 +1,9 @@
+version: '3'
+services:
+
+  tictactoe-game-api:
+    build: .
+    ports:
+      - "8282:8282"
+    container_name: tictactoe-game-api
+    restart: always
