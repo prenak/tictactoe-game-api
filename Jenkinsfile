@@ -17,7 +17,7 @@ pipeline{
         stage("Build Docker Image") {
             steps {
                 echo "Building the docker image version ${env.BUILD_NUMBER}"
-                sh "docker build -t prenak/tictactoe-game-api:${env.BUILD_NUMBER} ."
+                sh "docker build -t prenak/tictactoe-game-api:latest -t prenak/tictactoe-game-api:${env.BUILD_NUMBER} ."
                 echo "Docker image built successfully"
             }
         }
@@ -27,7 +27,7 @@ pipeline{
                 withCredentials([string(credentialsId: 'dockerHubPassword', variable: 'dockerHubPass')]) {
                     sh "docker login -u prenak -p ${dockerHubPass}"
                 }
-                sh "docker push prenak/tictactoe-game-api:${env.BUILD_NUMBER}"
+                sh "docker push prenak/tictactoe-game-api --all-tags"
                 echo "Docker image is pushed to repository successfully"
             }
         }
