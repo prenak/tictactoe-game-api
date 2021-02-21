@@ -6,6 +6,11 @@ pipeline{
         maven "3.6.3"
     }
 
+    environment{
+        DOCKER_HUB_USER = "prenak"
+        DOCKER_IMG_NAME = "prenak/tictactoe-game-api"
+    }
+
     stages{
         stage("Compile, Test and Package") {
             steps {
@@ -17,7 +22,7 @@ pipeline{
         stage("Build Docker Image") {
             steps {
                 echo "Building the docker image version ${env.BUILD_NUMBER}"
-                sh "docker build -t prenak/tictactoe-game-api:latest -t prenak/tictactoe-game-api:${env.BUILD_NUMBER} ."
+                sh "docker build -t ${DOCKER_IMG_NAME}:latest -t ${DOCKER_IMG_NAME}:${env.BUILD_NUMBER} ."
                 echo "Docker image built successfully"
             }
         }
@@ -25,10 +30,18 @@ pipeline{
             steps {
                 echo "Pushing the docker image to repository"
                 withCredentials([string(credentialsId: 'dockerHubPassword', variable: 'dockerHubPass')]) {
-                    sh "docker login -u prenak -p ${dockerHubPass}"
+                    sh "docker login -u ${DOCKER_HUB_USER} -p ${dockerHubPass}"
                 }
-                sh "docker push prenak/tictactoe-game-api --all-tags"
+                sh "docker push ${DOCKER_IMG_NAME} --all-tags"
                 echo "Docker image is pushed to repository successfully"
+            }
+        }
+        stage("Delete Local Docker Image") {
+            steps {
+                echo "Deleting the local copy of docker images"
+                sh "docker image rm ${DOCKER_IMG_NAME}:latest"
+                sh "docker image rm ${DOCKER_IMG_NAME}:${env.BUILD_NUMBER}"
+                echo "Deleted local Docker images successfully"
             }
         }
     }
