@@ -49,8 +49,8 @@ pipeline{
         }
         stage("Deploying the images on AWS") {
             steps {
-                def dockerRunCmd = "docker run -d -p 8282:8282 --name tictactoe-game-api ${DOCKER_IMG_NAME}:latest"
-                echo "dockerRunCmd is ${dockerRunCmd}"
+                DOCKER_RUN_CMD = "docker run -d -p 8282:8282 --name tictactoe-game-api ${DOCKER_IMG_NAME}:latest"
+                echo "dockerRunCmd is ${DOCKER_RUN_CMD}"
                 //sshagent(['dev-deploy-creds']) {
                 //    sh "ssh ${AWS_USER_NAME}@${AWS_EC2_IP} ${dockerRunCmd}"
                 //}
