@@ -10,6 +10,9 @@ import com.tst.tictactoe.repository.GameRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
@@ -26,16 +29,32 @@ public class GamePlayService {
 
 
     public UUID createNewGame(GameInfo newGameInfo){
+        Assert.notNull(newGameInfo, "GameInfo passed is null");
+        Assert.hasText(newGameInfo.getPlayer_x(), "Pass a valid name for Player_X");
+        Assert.hasText(newGameInfo.getPlayer_o(), "Pass a valid name for Player_O");
+
+        log.debug("Creating a new game with player_x {} and player_o {}", newGameInfo.getPlayer_x(), newGameInfo.getPlayer_o());
         Game game = new Game();
         game.setFirstPlayer(new Player(newGameInfo.getPlayer_x(), PlayerSymbol.X.getSymbol()));
         game.setSecondPlayer(new Player(newGameInfo.getPlayer_o(), PlayerSymbol.O.getSymbol()));
         game.setNextPlayer(game.getFirstPlayer());
-        return gameRepository.save(game).getGameId();
+        UUID gameId = gameRepository.save(game).getGameId();
+        log.info("New game created. GameId: {}", gameId);
+        return gameId;
     }
 
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public GameInfo makeAMove(String gameId, Integer row, Integer column) throws Exception {
-        Game game = gameRepository.findById(UUID.fromString(gameId)).orElseThrow(() -> new Exception("Game not found"));
+        Assert.hasText(gameId, "GameId passed is null or empty");
+        Assert.notNull(row, "Row passed is null");
+        Assert.notNull(column, "Column passed is null");
+
+        if (! isValidIndices(row, column)) throw new Exception("Invalid indices passed");
+
+        log.debug("Fetching the game with id {}", gameId);
+        Game game = gameRepository.findById(UUID.fromString(gameId)).orElseThrow(() -> new Exception("Invalid game id"));
+        log.debug("Game fetched: {}", game);
         Player player = game.getNextPlayer();
         Move move = new Move(row, column, game, player);
         game.getMoves().add(move);
@@ -48,6 +67,7 @@ public class GamePlayService {
         gameInfo.setPlayer_o(game.getSecondPlayer().getName());
 
         if(checkIfPlayerWon(board, row, column, player.getSymbol()) || (game.getMoves().size() == Math.pow(BOARD_SIZE, 2))) {
+            log.info("Game completed!");
             game.setGameStatus(GameStatus.COMPLETED);
             game.setNextPlayer(null);
             gameInfo.setNextPlayer('\0');
@@ -57,19 +77,28 @@ public class GamePlayService {
             );
 
         } else {
+            log.debug("Game ongoing...");
             Character firstPlayerSymbol = game.getFirstPlayer().getSymbol();
             game.setNextPlayer(player.getSymbol() == firstPlayerSymbol ? game.getSecondPlayer() : game.getFirstPlayer());
             gameInfo.setNextPlayer(game.getNextPlayer().getSymbol());
         }
 
         gameRepository.save(game);
+        log.info("Returning {}", gameInfo);
         return gameInfo;
     }
 
 
     public List<GameInfo> fetchAllGames() {
+        log.debug("Fetching the list of all games");
         List<GameInfo> gameInfoList = new ArrayList<>();
         List<Game> games = gameRepository.findAll();
+        if (CollectionUtils.isEmpty(games)){
+            log.debug("No games available yet");
+            return new ArrayList<>();
+        }
+
+        log.info("Found {} games", games.size());
         games.forEach(game -> {
             GameInfo gameInfo = new GameInfo();
             gameInfo.setGameId(game.getGameId().toString());
@@ -81,11 +110,13 @@ public class GamePlayService {
             );
             gameInfoList.add(gameInfo);
         });
+        log.debug("Returning the list of games: {}", gameInfoList);
         return gameInfoList;
     }
 
 
     private boolean checkIfPlayerWon(Character[][] board, int row, int col, char symbol) {
+        log.debug("Checking if the current player won");
         for(int i = 0; i < BOARD_SIZE; i++){
             if(board[i][col] != symbol)
                 break;
@@ -122,6 +153,7 @@ public class GamePlayService {
 
 
     private Character[][] convertMovesToGameBoard(List<Move> moves) {
+        log.debug("Converting the moves to board array");
         Character[][] board = new Character[BOARD_SIZE][BOARD_SIZE];
         for (Character[] row : board){
             Arrays.fill(row, '\0');
@@ -133,5 +165,10 @@ public class GamePlayService {
         });
         log.debug("Board: {}", board);
         return board;
+    }
+
+
+    private boolean isValidIndices(int row, int column) {
+        return  row >=0 && row < BOARD_SIZE && column >= 0 && column < BOARD_SIZE;
     }
 }
