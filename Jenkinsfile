@@ -9,6 +9,8 @@ pipeline{
     environment{
         DOCKER_HUB_USER = "prenak"
         DOCKER_IMG_NAME = "prenak/tictactoe-game-api"
+        CONTAINER_NAME  = "tictactoe-game-api"
+        CONTAINER_PORT  = "8282"
 
         AWS_USER_NAME   = ""
         AWS_EC2_IP      = ""
@@ -35,7 +37,7 @@ pipeline{
                 withCredentials([string(credentialsId: 'dockerHubPassword', variable: 'dockerHubPass')]) {
                     sh "docker login -u ${DOCKER_HUB_USER} -p ${dockerHubPass}"
                 }
-                //sh "docker push ${DOCKER_IMG_NAME} --all-tags"
+                sh "docker push ${DOCKER_IMG_NAME} --all-tags"
                 echo "Docker image is pushed to repository successfully"
             }
         }
@@ -50,9 +52,9 @@ pipeline{
         stage("Deploying the images on AWS") {
             steps {
                 script{
-                    DOCKER_RUN_CMD = "docker run -d -p 8282:8282 --name tictactoe-game-api ${DOCKER_IMG_NAME}:latest"
+                    DOCKER_RUN_CMD = "docker run -d -p ${CONTAINER_PORT}:${CONTAINER_PORT} --name ${CONTAINER_NAME}  ${DOCKER_IMG_NAME}:latest"
                 }
-                echo "dockerRunCmd is ${DOCKER_RUN_CMD}"
+                echo "Docker Run Command is ${DOCKER_RUN_CMD}"
                 //sshagent(['dev-deploy-creds']) {
                 //    sh "ssh ${AWS_USER_NAME}@${AWS_EC2_IP} ${dockerRunCmd}"
                 //}
