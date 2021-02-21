@@ -23,11 +23,8 @@ pipeline{
         }
         stage("Build Docker Image") {
             steps {
-                echo "Building the docker image..."
-                echo "Build version is ${env.BUILD_NUMBER}"
-                sh "whoami"
-                sh "docker version"
-                sh "docker build -t prenak/tictactoe-game-api:${env.BUILD_NUMBER}"
+                echo "Building the docker image version ${env.BUILD_NUMBER}"
+                sh "docker build -t prenak/tictactoe-game-api:${env.BUILD_NUMBER} ."
                 echo "Building the docker image successfully completed"
             }
         }
@@ -35,7 +32,7 @@ pipeline{
 
     post{
         always{
-            cleanWs()
+            //cleanWs()
         }
     }
 }
