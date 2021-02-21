@@ -4,7 +4,6 @@ pipeline{
 
     tools{
         maven "3.6.3"
-        docker "docker"
     }
 
     stages{
@@ -26,6 +25,7 @@ pipeline{
             steps {
                 echo "Building the docker image..."
                 echo "Build version is ${env.BUILD_NUMBER}"
+                sh "docker version"
                 sh "docker build -t prenak/tictactoe-game-api:${env.BUILD_NUMBER}"
                 echo "Building the docker image successfully completed"
             }
