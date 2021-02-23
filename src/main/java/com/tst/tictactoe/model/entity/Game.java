@@ -22,7 +22,7 @@ public class Game {
     @Id
     private UUID gameId = UUID.randomUUID();
 
-    private Boolean isCompleted = Boolean.FALSE;
+    private boolean isCompleted;
 
     @Enumerated(EnumType.STRING)
     private GameStatus gameStatus = GameStatus.IN_PROGRESS;

@@ -55,6 +55,12 @@ public class GamePlayService {
         log.debug("Fetching the game with id {}", gameId);
         Game game = gameRepository.findById(UUID.fromString(gameId)).orElseThrow(() -> new Exception("Invalid game id"));
         log.debug("Game fetched: {}", game);
+        if (game.getMoves()
+                .stream()
+                .anyMatch(move -> row.equals(move.getBoardRow()) && column.equals(move.getBoardColumn()))){
+            throw new Exception(String.format("Row %s and Column %s are already selected", row, column));
+        }
+
         Player player = game.getNextPlayer();
         Move move = new Move(row, column, game, player);
         game.getMoves().add(move);
