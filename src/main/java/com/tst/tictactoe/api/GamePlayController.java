@@ -38,7 +38,13 @@ public class GamePlayController {
             gameId = gamePlayService.createNewGame(gameInfo).toString();
             log.info("Created a new game with id {}", gameId);
 
-        } catch (Exception ex){
+        } catch (IllegalArgumentException iae) {  //TODO: to move common exceptions to global exception handler using @ControllerAdvise
+            log.error("IllegalArgumentException - {}", iae.getMessage(), iae);
+            ResponseStatusException responseStatusException = new ResponseStatusException(HttpStatus.BAD_REQUEST, iae.getMessage());
+            log.info("Returning ResponseStatusException: ", responseStatusException);
+            throw responseStatusException;
+
+        } catch (Exception ex){ //TODO: to move common exceptions to global exception handler using @ControllerAdvise
             log.error("Exception - {}", ex.getMessage(), ex);
             ResponseStatusException responseStatusException = new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
             log.info("Returning ResponseStatusException: ", responseStatusException);
@@ -66,7 +72,7 @@ public class GamePlayController {
                 gameInfoDtos.add(gameInfoDto);
             });
 
-        } catch (Exception ex) {
+        } catch (Exception ex) { //TODO: to move common exceptions to global exception handler using @ControllerAdvise
             log.error("Exception - {}", ex.getMessage(), ex);
             ResponseStatusException responseStatusException = new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
             log.info("Returning ResponseStatusException: ", responseStatusException);
@@ -91,7 +97,13 @@ public class GamePlayController {
                                 move.getBoardColumn(), move.getCreatedTimestamp()));
             });
 
-        } catch (Exception ex){
+        } catch (IllegalArgumentException iae) { //TODO: to move common exceptions to global exception handler using @ControllerAdvise
+            log.error("IllegalArgumentException - {}", iae.getMessage(), iae);
+            ResponseStatusException responseStatusException = new ResponseStatusException(HttpStatus.BAD_REQUEST, iae.getMessage());
+            log.info("Returning ResponseStatusException: ", responseStatusException);
+            throw responseStatusException;
+
+        } catch (Exception ex){ //TODO: to move common exceptions to global exception handler using @ControllerAdvise
             log.error("Exception - {}", ex.getMessage(), ex);
             ResponseStatusException responseStatusException = new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
             log.info("Returning ResponseStatusException: ", responseStatusException);
