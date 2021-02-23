@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tictactoe-game-api-deployment
+spec:
+  selector:
+    matchLabels:
+      app: tictactoe-game-api
+  template:
+    metadata:
+      labels:
+        app: tictactoe-game-api
+    spec:
+      containers:
+        - name: tictactoe-game-api
+          image: prenak/tictactoe-game-api:tagVersion
+          ports:
+            - containerPort: 8282
+  replicas: 4
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%

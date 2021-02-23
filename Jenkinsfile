@@ -9,11 +9,8 @@ pipeline{
     environment{
         DOCKER_HUB_USER = "prenak"
         DOCKER_IMG_NAME = "prenak/tictactoe-game-api"
-        CONTAINER_NAME  = "tictactoe-game-api"
-        CONTAINER_PORT  = "8282"
-
-        AWS_USER_NAME   = ""
-        AWS_EC2_IP      = ""
+        CLOUD_USER_NAME = "ec2-user"
+        CLOUD_MAC_IP    = "52:66:70:21"
     }
 
     stages{
@@ -33,7 +30,7 @@ pipeline{
         }
         stage("Push Docker Image to Repository") {
             steps {
-                echo "Pushing the docker image to repository"
+                echo "Pushing the docker image to repository..."
                 withCredentials([string(credentialsId: 'dockerHubPassword', variable: 'dockerHubPass')]) {
                     sh "docker login -u ${DOCKER_HUB_USER} -p ${dockerHubPass}"
                 }
@@ -43,21 +40,27 @@ pipeline{
         }
         stage("Delete Local Docker Image") {
             steps {
-                echo "Deleting the local copy of docker images"
+                echo "Deleting the local copy of docker images..."
                 sh "docker image rm ${DOCKER_IMG_NAME}:latest"
                 sh "docker image rm ${DOCKER_IMG_NAME}:${env.BUILD_NUMBER}"
                 echo "Deleted local Docker images successfully"
             }
         }
-        stage("Deploying the images on AWS") {
+        stage("Rollout to K8s Cluster") {
             steps {
-                script{
-                    DOCKER_RUN_CMD = "docker run -d -p ${CONTAINER_PORT}:${CONTAINER_PORT} --name ${CONTAINER_NAME}  ${DOCKER_IMG_NAME}:latest"
-                }
-                echo "Docker Run Command is ${DOCKER_RUN_CMD}"
-                //sshagent(['dev-deploy-creds']) {
-                //    sh "ssh ${AWS_USER_NAME}@${AWS_EC2_IP} ${dockerRunCmd}"
-                //}
+                echo "Rolling out to K8s cluster..."
+                sh "chmod +x updateTag.sh"
+                sh "./updateTag.sh ${env.BUILD_NUMBER}"
+                sh "cat deployment.yaml"
+                sh "cat service.yaml"
+
+                /*sshagent(['k8s-cluster']) {
+                    sh "scp -o StrictHostKeyChecking=no service.yaml deployment.yaml ${CLOUD_USER_NAME}@${CLOUD_MAC_IP}:/home/${CLOUD_USER_NAME}"
+                    script{
+                        sh "ssh ${CLOUD_USER_NAME}@${CLOUD_MAC_IP} kubectl apply -f ."
+                    }
+                }*/
+                echo "Rollout succeeded!"
             }
         }
     }
